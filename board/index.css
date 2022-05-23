@@ -197,7 +197,7 @@ body{
     border-bottom: none;
 }
 
-.details table tr:hover{
+.details table tbody tr:hover{
     background: var(--blue);
     color: var(--white);
     transition: 0.4s;
