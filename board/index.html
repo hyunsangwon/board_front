@@ -394,6 +394,33 @@
             //1. input 값을 가져옴.
             var search = $('#searchBar').val();//input에 작성한 작성자를 가져옴
             //2. AJAX 호출
+            $.ajax({
+                url: 'http://localhost:8080/api/v1/board/search?writer='+search,
+                type : 'GET',
+                dataType: 'json',
+                success: function (response) {
+                    var html = '';
+                    if(response.length > 0){
+                        for(var i=0; i<response.length; i++){          
+                            var views = response[i].cnt;
+                            if(views < 10){
+                                html += '<tr onclick=getBoard('+response[i].boardId+') ><td>'+response[i].boardId+'</td><td>'+response[i].studentsName+'</td><td>'+response[i].title+'</td><td>'+response[i].updateAt+'</td><td>'+response[i].createAt+'</td><td><span class="row">'+response[i].cnt+'</span></td></tr>';  
+                            }
+                            if(views >= 10 && views < 20){
+                                html += '<tr onclick=getBoard('+response[i].boardId+') ><td>'+response[i].boardId+'</td><td>'+response[i].studentsName+'</td><td>'+response[i].title+'</td><td>'+response[i].updateAt+'</td><td>'+response[i].createAt+'</td><td><span class="middle">'+response[i].cnt+'</span></td></tr>';  
+                            }
+                            if(views >= 20){
+                                html += '<tr onclick=getBoard('+response[i].boardId+') ><td>'+response[i].boardId+'</td><td>'+response[i].studentsName+'</td><td>'+response[i].title+'</td><td>'+response[i].updateAt+'</td><td>'+response[i].createAt+'</td><td><span class="high">'+response[i].cnt+'</span></td></tr>';  
+                            }
+                        }
+                    }else{
+                        //게시글 없음 로직 구현
+                        html += '<tr><td colspan=6 style="text-align: center;">게시글이 없습니다.</td></tr>';
+                    }
+                    $('#boardData').children().remove();
+                    $('#boardData').append(html);//tbody에 json데이터 렌더링
+                }
+            });
         }
     });
 
