@@ -263,20 +263,26 @@
                     //페이징 화면 구현
                     var paginationHtml = '';
                     if(response.hasPreviousPage){ //이전 페이지가 true 라면
-                        paginationHtml += '<a href="#">Previous</a>';
+                        paginationHtml += '<a onclick="getBoardList('+(response.pageNum-1)+','+pageSize+')" href="#">Previous</a>';
                     }
                     for(var i=0; i<response.navigatepageNums.length; i++){ //페이지 번호 길이 만큼 for문 실행
-                        paginationHtml += '<a onclick="getBoardList('+response.navigatepageNums[i]+',10)" href="#">'+response.navigatepageNums[i]+'</a>';
+                        paginationHtml += '<a id="pageNum'+response.navigatepageNums[i]+'" onclick="getBoardList('+response.navigatepageNums[i]+','+pageSize+')">'+response.navigatepageNums[i]+'</a>';
                     }
                     if(response.hasNextPage){ //다음 페이지가 true 라면
-                        paginationHtml += '<a href="#">Next</a>';
+                        paginationHtml += '<a onclick="getBoardList('+(response.pageNum+1)+','+pageSize+')" href="#">Next</a>';
                     }
+                    $('.pagination').children().remove();
                     $('.pagination').append(paginationHtml);
+
+                    //페이지 번호에 맞게 css 수정
+                    $('#pageNum'+pageNum).css('backgroundColor','#287bff');
+                    $('#pageNum'+pageNum).css('color','#fff');
 
                 }else{
                     //게시글 없음 로직 구현
                     html += '<tr><td colspan=6 style="text-align: center;">게시글이 없습니다.</td></tr>';
                 }
+                $('#boardData').children().remove();
                 $('#boardData').append(html);//tbody에 json데이터 렌더링
             }
         });
@@ -333,7 +339,7 @@
                         $('#title').val('');
                         $('#content').val('');                      
                         $('#boardData').children().remove();//tbody id
-                        getBoardList();
+                        getBoardList(1,10);
                     }
                 }
             });//ajax end
@@ -398,7 +404,7 @@
                 if(response > 0){
                     alert('삭제 완료');
                     $('#boardData').children().remove();
-                    getBoardList();
+                    getBoardList(1,10);
                     $('.update-popup').css('display', 'none'); //게시물 상세 화면 감추기
                 }
             }
@@ -413,7 +419,7 @@
             success: function (response) {
                 if(response > 0){
                     $('#boardData').children().remove();//tbody id
-                    getBoardList();
+                    getBoardList(1,10);
                 }
             }
         });
@@ -457,7 +463,5 @@
             });
         }
     });
-
-
 </script>
 </html>
