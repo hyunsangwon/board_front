@@ -95,6 +95,7 @@
             <div class="search">
                 <label>
                     <input id="searchBar" type="text" placeholder="작성자를 검색하세요..." >
+                    <input id="keyword" type="hidden" value="null">
                 </label>
             </div>
             <div>
@@ -237,8 +238,13 @@
     getBoardStatistics();
 
     function getBoardList(pageNum, pageSize){
+        var controllerUrl = 'http://localhost:8080/api/v1/board?pageNum='+pageNum+'&pageSize='+pageSize;
+        var keyword = $('#keyword').val();
+        if(keyword != 'null'){
+            controllerUrl = 'http://localhost:8080/api/v1/board/search?writer='+keyword+'&pageNum='+pageNum+'&pageSize='+pageSize;
+        }
         $.ajax({
-            url: 'http://localhost:8080/api/v1/board?pageNum='+pageNum+'&pageSize='+pageSize,
+            url: controllerUrl,
             type : 'GET',
             dataType: 'json',
             success: function (response) {
@@ -283,7 +289,7 @@
                 }
                 $('#boardData').children().remove();
                 $('#boardData').append(html);//tbody에 json데이터 렌더링
-            }
+            }//end success function
         });
     }//end function
 
@@ -338,7 +344,7 @@
                         $('#title').val('');
                         $('#content').val('');                      
                         $('#boardData').children().remove();//tbody id
-                        getBoardList(1,10);
+                        getBoardList(1, 10);
                     }
                 }
             });//ajax end
@@ -429,35 +435,60 @@
     $('#searchBar').keyup(function(key){
         //엔터를 누를때 hello world를 출력하고 싶음.
         //13은 엔터를 의미
+        var pageSize = 10;
+        var pageNum = 1;
         if(key.keyCode == 13){
             //1. input 값을 가져옴.
-            var search = $('#searchBar').val();//input에 작성한 작성자를 가져옴
+            var search = $('#searchBar').val().trim();//input에 작성한 작성자를 가져옴
+            if(search != ''){
+                $('#keyword').val(search);//hidden 태그에 내가 검색한 키워드를 value에 set함
+            } 
             //2. AJAX 호출
             $.ajax({
-                url: 'http://localhost:8080/api/v1/board/search?writer='+search,
+                url: 'http://localhost:8080/api/v1/board/search?writer='+search+'&pageNum='+pageNum+'&pageSize='+pageSize,
                 type : 'GET',
                 dataType: 'json',
                 success: function (response) {
-                    var html = '';
-                    if(response.length > 0){
-                        for(var i=0; i<response.length; i++){          
-                            var views = response.list[i].cnt;
-                            if(views < 10){
-                                html += '<tr onclick=getBoard('+response.list[i].boardId+') ><td>'+response.list[i].boardId+'</td><td>'+response.list[i].studentsName+'</td><td>'+response.list[i].title+'</td><td>'+response.list[i].updateAt+'</td><td>'+response.list[i].createAt+'</td><td><span class="row">'+response.list[i].cnt+'</span></td></tr>';  
-                            }
-                            if(views >= 10 && views < 20){
-                                html += '<tr onclick=getBoard('+response.list[i].boardId+') ><td>'+response.list[i].boardId+'</td><td>'+response.list[i].studentsName+'</td><td>'+response.list[i].title+'</td><td>'+response.list[i].updateAt+'</td><td>'+response.list[i].createAt+'</td><td><span class="middle">'+response.list[i].cnt+'</span></td></tr>';  
-                            }
-                            if(views >= 20){
-                                html += '<tr onclick=getBoard('+response.list[i].boardId+') ><td>'+response.list[i].boardId+'</td><td>'+response.list[i].studentsName+'</td><td>'+response.list[i].title+'</td><td>'+response.list[i].updateAt+'</td><td>'+response.list[i].createAt+'</td><td><span class="high">'+response.list[i].cnt+'</span></td></tr>';  
-                            }
+                var html = '';
+                var len = response.list.length;
+                if(len > 0){
+                    for(var i=0; i<len; i++){          
+                        var views = response.list[i].cnt;
+                        if(views < 10){
+                            //crtl + shift + H => 전체 replace
+                            html += '<tr onclick=getBoard('+response.list[i].boardId+') ><td>'+response.list[i].boardId+'</td><td>'+response.list[i].studentsName+'</td><td>'+response.list[i].title+'</td><td>'+response.list[i].updateAt+'</td><td>'+response.list[i].createAt+'</td><td><span class="row">'+response.list[i].cnt+'</span></td></tr>';  
                         }
-                    }else{
-                        //게시글 없음 로직 구현
-                        html += '<tr><td colspan=6 style="text-align: center;">게시글이 없습니다.</td></tr>';
+                        if(views >= 10 && views < 20){
+                            html += '<tr onclick=getBoard('+response.list[i].boardId+') ><td>'+response.list[i].boardId+'</td><td>'+response.list[i].studentsName+'</td><td>'+response.list[i].title+'</td><td>'+response.list[i].updateAt+'</td><td>'+response.list[i].createAt+'</td><td><span class="middle">'+response.list[i].cnt+'</span></td></tr>';  
+                        }
+                        if(views >= 20){
+                            html += '<tr onclick=getBoard('+response.list[i].boardId+') ><td>'+response.list[i].boardId+'</td><td>'+response.list[i].studentsName+'</td><td>'+response.list[i].title+'</td><td>'+response.list[i].updateAt+'</td><td>'+response.list[i].createAt+'</td><td><span class="high">'+response.list[i].cnt+'</span></td></tr>';  
+                        }
+                    }//end for
+                    //페이징 화면 구현
+                    var paginationHtml = '';
+                    if(response.hasPreviousPage){ //이전 페이지가 true 라면
+                        paginationHtml += '<a onclick="getBoardList('+(response.pageNum-1)+','+pageSize+')" href="#">Previous</a>';
                     }
-                    $('#boardData').children().remove();
-                    $('#boardData').append(html);//tbody에 json데이터 렌더링
+                    for(var i=0; i<response.navigatepageNums.length; i++){ //페이지 번호 길이 만큼 for문 실행
+                        paginationHtml += '<a id="pageNum'+response.navigatepageNums[i]+'" onclick="getBoardList('+response.navigatepageNums[i]+','+pageSize+')">'+response.navigatepageNums[i]+'</a>';
+                    }
+                    if(response.hasNextPage){ //다음 페이지가 true 라면
+                        paginationHtml += '<a onclick="getBoardList('+(response.pageNum-1)+','+pageSize+')" href="#">Next</a>';
+                    }
+                    $('.pagination').children().remove();
+                    $('.pagination').append(paginationHtml);
+
+                    //페이지 번호에 맞게 css 수정
+                    $('#pageNum'+pageNum).css('backgroundColor','#287bff');
+                    $('#pageNum'+pageNum).css('color','#fff');
+
+                }else{
+                    //게시글 없음 로직 구현
+                    html += '<tr><td colspan=6 style="text-align: center;">게시글이 없습니다.</td></tr>';
+                }
+                $('#boardData').children().remove();
+                $('#boardData').append(html);//tbody에 json데이터 렌더링
                 }
             });
         }
