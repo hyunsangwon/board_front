@@ -248,6 +248,7 @@
             type : 'GET',
             dataType: 'json',
             success: function (response) {
+                console.log(response);
                 //html append 작성
                 var html = '';
                 var len = response.list.length;
@@ -349,7 +350,7 @@
                 }
             });//ajax end
         }//if end 
-    });//contentSubmit click end
+    });
 
     function getBoard(boardId){//클릭한 게시물 확인하는 함수 
         //boardId html에 hidden 하기
